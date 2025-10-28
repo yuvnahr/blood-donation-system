@@ -1,0 +1,73 @@
+# ===========================
+# Node.js / Express backend
+# ===========================
+
+# Node dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+
+# Environment & secrets
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Editor & IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*.bak
+
+# Build / Cache files
+dist/
+build/
+.cache/
+coverage/
+.tmp/
+*.tmp
+*.temp
+
+# Codespaces & Containers
+.devcontainer/
+*.code-workspace
+
+# OS-specific
+*.pid
+*.seed
+*.pid.lock
+
+# Backup files
+*~
+*.old
+*.orig
+*.save
+
+# Optional - ignore test results
+coverage/
+jest-results/
+test-results/
+
+# ===========================
+# Keep these (don’t ignore)
+# ===========================
+!package.json
+!app.js
+!db.js
+!routes/
