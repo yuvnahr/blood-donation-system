@@ -6,6 +6,7 @@ import Donors from "./pages/Donors";
 import Inventory from "./pages/Inventory";
 import AddDonation from "./pages/AddDonation";
 import IssueBlood from "./pages/IssueBlood";
+import Recipients from "./pages/Recipients"; // ✅ add this import
 
 function App() {
   return (
@@ -15,6 +16,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Dashboard />} />
           <Route path="/donors" element={<Donors />} />
+          <Route path="/recipients" element={<Recipients />} /> 
           <Route path="/inventory" element={<Inventory />} />
           <Route path="/add-donation" element={<AddDonation />} />
           <Route path="/issue-blood" element={<IssueBlood />} />
