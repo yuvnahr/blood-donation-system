@@ -1,9 +1,10 @@
 -- =====================================================
--- BLOOD DONATION MANAGEMENT SYSTEM (Version 3)
--- Complete SQL Schema + Procedures + Triggers + Functions
--- Author: Yuv & Lasya
+-- BLOOD DONATION MANAGEMENT SYSTEM (Version 4 - India)
+-- Complete SQL Schema + Eligibility Rules Added
+-- Authors: Yuv & Lasya
 -- =====================================================
 
+DROP DATABASE IF EXISTS blood_org_db;
 CREATE DATABASE blood_org_db;
 USE blood_org_db;
 
@@ -21,11 +22,15 @@ CREATE TABLE hospitals (
 );
 
 CREATE TABLE donors (
-  donor_id     BIGINT AUTO_INCREMENT PRIMARY KEY,
-  name         VARCHAR(255) NOT NULL,
-  contact      VARCHAR(100) NOT NULL,
-  dob          DATE NOT NULL,
-  blood_group  ENUM('A+','A-','B+','B-','AB+','AB-','O+','O-') NOT NULL
+  donor_id       BIGINT AUTO_INCREMENT PRIMARY KEY,
+  name           VARCHAR(255) NOT NULL,
+  contact        VARCHAR(100) NOT NULL,
+  dob            DATE NOT NULL,
+  age            INT NOT NULL,
+  weight         DECIMAL(5,2) NOT NULL,
+  hemoglobin     DECIMAL(4,1) NOT NULL DEFAULT 13.0,
+  is_first_time  TINYINT(1) NOT NULL DEFAULT 1,
+  blood_group    ENUM('A+','A-','B+','B-','AB+','AB-','O+','O-') NOT NULL
 );
 
 CREATE TABLE recipients (
@@ -79,7 +84,6 @@ CREATE TABLE blood_transactions (
   CONSTRAINT fk_txn_unit FOREIGN KEY (blood_unit_id) REFERENCES blood_inventory(blood_unit_id)
 );
 
--- Audit table for all operations on blood issuance
 CREATE TABLE audit_log (
   log_id BIGINT AUTO_INCREMENT PRIMARY KEY,
   action_type VARCHAR(50),
@@ -89,30 +93,63 @@ CREATE TABLE audit_log (
 );
 
 -- =====================================================
--- DUMMY DATA (10 entries)
+-- ELIGIBILITY VALIDATION TRIGGER
+-- =====================================================
+
+DELIMITER //
+CREATE TRIGGER trg_validate_donor
+BEFORE INSERT ON donors
+FOR EACH ROW
+BEGIN
+  IF NEW.age < 18 OR NEW.age > 65 THEN
+      SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Donor is outside allowed age range (18-65).';
+  END IF;
+
+  IF NEW.weight < 50 THEN
+      SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Donor weight must be at least 50 kg.';
+  END IF;
+
+  IF NEW.hemoglobin < 12.5 THEN
+      SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Low hemoglobin! Not eligible to donate.';
+  END IF;
+END //
+DELIMITER ;
+
+-- =====================================================
+-- DUMMY DATA (India - Updated With New Fields)
 -- =====================================================
 
 INSERT INTO hospitals (name, contact, location) VALUES
 ('CityCare Hospital','080-4000-1001','Bengaluru, KA'),
 ('Lakeside Medical Center','0821-555-2200','Mysuru, KA'),
-('Sunrise Hospital','0824-888-7711','Mangaluru, KA');
+('Sunrise Hospital','0824-888-7711','Mangaluru, KA'),
+('Aster Hospital','080-3900-5601','Bengaluru, KA'),
+('KIMS Hospital','080-5566-1122','Hubballi, KA');
 
-INSERT INTO donors (name, contact, dob, blood_group) VALUES
-('Arjun Mehta','9876543210','1995-06-15','A+'),
-('Priya Nair','9876501234','1999-11-03','O-'),
-('Rohan Gupta','9812312345','1988-02-20','B+'),
-('Neel Rao','9823456789','1993-07-12','AB+'),
-('Sneha Iyer','9898765432','1990-01-05','A-'),
-('Manoj Kumar','9812345678','1994-12-23','B-'),
-('Ananya Das','9834567890','2000-04-10','O+'),
-('Kabir Singh','9801234567','1991-03-03','AB-'),
-('Isha Patel','9845671230','1996-09-18','A+'),
-('Rahul Verma','9821345678','1998-08-22','O+');
+INSERT INTO donors (name, contact, dob, age, weight, hemoglobin, is_first_time, blood_group) VALUES
+('Arjun Mehta','9876543210','1995-06-15',29,75.5,14.2,0,'A+'),
+('Priya Nair','9876501234','1999-11-03',25,56.2,13.1,1,'O-'),
+('Rohan Gupta','9812312345','1988-02-20',36,82.0,14.8,0,'B+'),
+('Neel Rao','9823456789','1993-07-12',31,70.8,13.9,0,'AB+'),
+('Sneha Iyer','9898765432','1990-01-05',34,60.0,12.6,1,'A-'),
+('Manoj Kumar','9812345678','1994-12-23',30,78.3,14.0,0,'B-'),
+('Ananya Das','9834567890','2000-04-10',24,53.6,13.3,1,'O+'),
+('Kabir Singh','9801234567','1991-03-03',33,85.0,14.5,0,'AB-'),
+('Isha Patel','9845671230','1996-09-18',28,59.9,13.8,1,'A+'),
+('Rahul Verma','9821345678','1998-08-22',26,74.2,14.1,1,'O+');
 
 INSERT INTO recipients (name, contact, hospital_id, blood_group) VALUES
 ('Neha Sharma','9900123456',1,'A+'),
 ('Vikram Rao','9900456789',2,'O-'),
-('Kavya Iyer','9898011223',1,'AB+');
+('Kavya Iyer','9898011223',1,'AB+'),
+('Arjun Gupta','9821345678',1,'A+'),
+('Sakshi Menon','9845671234',2,'B+'),
+('Rohini Pillai','9832145678',3,'O-'),
+('Devendra Joshi','9876123456',1,'AB+'),
+('Pooja Rani','9810098765',2,'B-'),
+('Vikas Tiwari','9821122233',3,'O+'),
+('Neha Dutta','9834567890',4,'A-'),
+('Ramesh Chauhan','9900776655',5,'O+');
 
 INSERT INTO donation_camps (date_held, organization, location, units_collected) VALUES
 ('2025-09-10','RedCross','Bengaluru',5),
@@ -131,7 +168,7 @@ INSERT INTO blood_inventory (blood_group, quantity_ml, donor_id, hospital_id, ca
 ('O+',350,10,3,1,'2025-11-29','available');
 
 -- =====================================================
--- FUNCTIONS
+-- FUNCTIONS (Same as V3)
 -- =====================================================
 
 DELIMITER //
@@ -182,7 +219,7 @@ END //
 DELIMITER ;
 
 -- =====================================================
--- STORED PROCEDURES
+-- STORED PROCEDURES (Same Logic As V3)
 -- =====================================================
 
 DELIMITER //
@@ -240,7 +277,7 @@ END //
 DELIMITER ;
 
 -- =====================================================
--- TRIGGERS
+-- TRIGGERS & EVENT (Same as V3)
 -- =====================================================
 
 DELIMITER //
@@ -271,10 +308,6 @@ BEGIN
 END //
 DELIMITER ;
 
--- =====================================================
--- EVENT (Daily Expiry Check)
--- =====================================================
-
 CREATE EVENT evt_mark_expired
 ON SCHEDULE EVERY 1 DAY
 DO
@@ -283,7 +316,7 @@ DO
   WHERE expiry_date < CURDATE() AND status='available';
 
 -- =====================================================
--- VIEWS (Summary Dashboard)
+-- VIEW (Hospital Summary)
 -- =====================================================
 
 CREATE OR REPLACE VIEW v_hospital_summary AS
@@ -297,14 +330,3 @@ SELECT
 FROM hospitals h
 LEFT JOIN blood_inventory bi ON h.hospital_id = bi.hospital_id
 GROUP BY h.hospital_id, h.name;
-
--- =====================================================
--- TEST QUERIES (commented)
--- =====================================================
--- CALL AddBloodDonation('Isha Patel', 'CityCare Hospital', 'A+', 500, '2025-12-30');
--- CALL IssueBlood('Neha Sharma', 'A+', 1500.00);
--- CALL RegisterRecipient('Riya Sen', '9911122233', 'Lakeside Medical Center', 'B+');
--- SELECT * FROM v_hospital_summary;
--- SELECT * FROM audit_log;
--- SELECT * FROM blood_inventory;
--- SELECT * FROM blood_transactions;
